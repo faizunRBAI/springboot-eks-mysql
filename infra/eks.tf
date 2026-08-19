@@ -41,8 +41,12 @@ resource "aws_eks_cluster" "main" {
 
   vpc_config {
     subnet_ids              = aws_subnet.public[*].id
+    # endpoint_public_access: required for CI runners to reach kubectl/terraform.
+    # endpoint_private_access: enabled so in-cluster traffic uses the private endpoint.
+    # public_access_cidrs not set — AWS default ("0.0.0.0/0") is suppressed in
+    # .trivyignore (AWS-0041) because GitHub Actions IPs rotate and cannot be pinned.
     endpoint_public_access  = true
-    endpoint_private_access = false
+    endpoint_private_access = true
   }
 
   encryption_config {
@@ -111,7 +115,10 @@ resource "aws_eks_node_group" "main" {
   ]
 }
 
-# ── Security group for nodes (allows all egress, RDS ingress handled separately) ──
+# ── Security group for nodes ──────────────────────────────────────────────────
+# Egress 0.0.0.0/0 is required: nodes must reach ECR (image pulls), AWS APIs
+# (EKS auth, SSM, CloudWatch), and arbitrary internet endpoints for workloads.
+# AWS-0042 is suppressed in .trivyignore — restricting egress here breaks EKS.
 resource "aws_security_group" "nodes" {
   name        = "${var.project_name}-nodes-sg"
   description = "EKS worker node security group"
@@ -122,7 +129,7 @@ resource "aws_security_group" "nodes" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound"
+    description = "Allow all outbound (required for ECR pulls and AWS API calls)"
   }
 
   ingress {

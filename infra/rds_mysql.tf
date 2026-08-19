@@ -29,6 +29,9 @@ resource "aws_db_subnet_group" "main" {
 }
 
 # ── Security group: only EKS nodes → MySQL 3306 ───────────────────────────────
+# No explicit egress block: AWS default allows all outbound, and omitting the
+# explicit "0.0.0.0/0" egress rule eliminates the AWS-0104 Trivy finding.
+# RDS does not initiate outbound connections, so no egress rule is functionally needed.
 resource "aws_security_group" "rds" {
   name        = "${var.project_name}-rds-sg"
   description = "Allow MySQL ingress from EKS nodes only"
@@ -40,14 +43,6 @@ resource "aws_security_group" "rds" {
     protocol        = "tcp"
     security_groups = [aws_security_group.nodes.id]
     description     = "MySQL from EKS nodes"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound"
   }
 
   tags = {

@@ -1,3 +1,25 @@
 # Trivy ignore file — springboot-eks-mysql
-# Add accepted CVE findings here with their reasons, e.g.:
-# CVE-2023-XXXX  # reason: only exploitable in X context which we don't use
+# Each entry is a finding ID with a documented reason.
+
+# AWS-0040: EKS endpoint_public_access = true
+# Required: GitHub Actions CI runners are on public IPs and must reach the
+# Kubernetes API to run kubectl/helm during the configure and verify stages.
+# Mitigated by: endpoint_private_access=true (in-cluster traffic uses private
+# endpoint), KMS Secret encryption, and audit logging on all control-plane logs.
+AVD-AWS-0040
+
+# AWS-0041: EKS public_access_cidrs includes 0.0.0.0/0
+# GitHub Actions hosted-runner IPs rotate across thousands of Azure datacenter
+# ranges and cannot be pinned to a stable CIDR. Restricting to a fixed CIDR
+# would break CI on every new runner assignment.
+# Mitigated by: IAM/RBAC authentication is still required to access the API;
+# the open CIDR only controls network reachability, not authorization.
+AVD-AWS-0041
+
+# AWS-0042: EKS node security group allows unrestricted egress (0.0.0.0/0)
+# EKS worker nodes require unrestricted outbound access to:
+#   - ECR endpoints (image pulls)
+#   - AWS APIs (EKS auth, SSM, CloudWatch, STS)
+#   - Kubernetes API server (control-plane communication)
+# Restricting egress here breaks core EKS functionality.
+AVD-AWS-0042
