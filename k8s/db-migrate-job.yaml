@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  namespace: %%NAMESPACE%%
+  labels:
+    app.kubernetes.io/name: db-migrate
+    app.kubernetes.io/part-of: springboot-eks-mysql
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        job-name: db-migrate
+    spec:
+      restartPolicy: Never
+      serviceAccountName: api
+      containers:
+        - name: migrate
+          image: %%IMAGE%%
+          imagePullPolicy: Always
+          # Run Flyway migration only — no HTTP server started
+          command: ["java", "-jar", "app.jar", "--spring.main.web-application-type=none"]
+          envFrom:
+            - secretRef:
+                name: app-database
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "384Mi"
+            limits:
+              memory: "512Mi"

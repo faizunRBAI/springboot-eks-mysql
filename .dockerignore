@@ -1,0 +1,11 @@
+.git
+.github
+.udap
+target/
+*.env
+*.env.*
+.env.example
+infra/
+ansible/
+k8s/
+*.md

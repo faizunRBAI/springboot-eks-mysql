@@ -1,0 +1,3 @@
+# Trivy ignore file — springboot-eks-mysql
+# Add accepted CVE findings here with their reasons, e.g.:
+# CVE-2023-XXXX  # reason: only exploitable in X context which we don't use

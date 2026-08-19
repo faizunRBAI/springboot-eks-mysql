@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: %%NAMESPACE%%
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: springboot-eks-mysql
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0        # Zero-downtime rolling release
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+        app.kubernetes.io/part-of: springboot-eks-mysql
+    spec:
+      serviceAccountName: api
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: api
+          image: %%IMAGE%%
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: app-database
+                optional: true  # Pods start without a DB for stateless testing
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+
+          # ── Probes ─────────────────────────────────────────────────────────
+          # Startup probe: gives the JVM up to 3 min to start before liveness kicks in.
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            failureThreshold: 36
+            periodSeconds: 5
+
+          # Liveness: restart if the app is stuck.
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+
+          # Readiness: remove from NLB if the app can't serve traffic.
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 5
+
+          # ── Resources ──────────────────────────────────────────────────────
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              memory: "768Mi"   # CPU limit omitted: throttling hurts JVM GC more than it helps
+
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]   # drain connections before SIGTERM

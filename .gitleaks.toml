@@ -1,0 +1,15 @@
+# Gitleaks configuration for springboot-eks-mysql
+# Add accepted false-positive patterns here with their reasons.
+title = "springboot-eks-mysql gitleaks config"
+
+[allowlist]
+  description = "Global allowlist"
+  # Add specific commit hashes, paths or regex patterns here as needed.
+  # paths = []
+  # commits = []
+  regexes = [
+    # H2 in-memory URL in test resources — not a real credential
+    "jdbc:h2:mem:",
+    # Placeholder in application.yaml documentation comments
+    "changeme",
+  ]

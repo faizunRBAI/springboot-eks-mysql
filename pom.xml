@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.4.1</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.example</groupId>
+  <artifactId>springboot-eks-mysql</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>springboot-eks-mysql</name>
+  <description>Spring Boot API on EKS with RDS MySQL</description>
+
+  <properties>
+    <java.version>21</java.version>
+    <!-- Dependency versions -->
+    <flyway.version>10.21.0</flyway.version>
+    <cyclonedx.version>2.9.1</cyclonedx.version>
+    <checkstyle.version>10.20.0</checkstyle.version>
+  </properties>
+
+  <dependencies>
+    <!-- Web -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Data -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <!-- Actuator (health, info, metrics) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <!-- MySQL driver — caching_sha2_password-compatible Connector/J 8.x -->
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- Flyway for MySQL -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-mysql</artifactId>
+      <version>${flyway.version}</version>
+    </dependency>
+
+    <!-- H2 for unit tests (MySQL-compatibility mode) -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Spring Boot fat-jar -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <!-- Checkstyle — lint gate -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.6.0</version>
+        <configuration>
+          <configLocation>config/checkstyle/checkstyle.xml</configLocation>
+          <failsOnError>true</failsOnError>
+          <consoleOutput>true</consoleOutput>
+          <excludes>**/generated/**</excludes>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>${checkstyle.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <!-- CycloneDX SBOM — security gate -->
+      <plugin>
+        <groupId>org.cyclonedx</groupId>
+        <artifactId>cyclonedx-maven-plugin</artifactId>
+        <version>${cyclonedx.version}</version>
+        <configuration>
+          <outputFormat>json</outputFormat>
+          <outputName>sbom-source.cdx</outputName>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
